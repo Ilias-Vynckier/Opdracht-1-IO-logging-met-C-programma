@@ -1,0 +1,3 @@
+/home/pi/embed2/Opdracht 1: IO logging met C programma/build/CMakeFiles/rebuild_cache.dir
+/home/pi/embed2/Opdracht 1: IO logging met C programma/build/CMakeFiles/Opdracht1.dir
+/home/pi/embed2/Opdracht 1: IO logging met C programma/build/CMakeFiles/edit_cache.dir
