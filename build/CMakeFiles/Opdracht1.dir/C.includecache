@@ -15,6 +15,8 @@ stdlib.h
 -
 PJ_RPI.h
 /home/pi/embed2/Opdracht 1: IO logging met C programma/PJ_RPI.h
+time.h
+-
 
 /home/pi/embed2/Opdracht 1: IO logging met C programma/PJ_RPI.h
 stdio.h
