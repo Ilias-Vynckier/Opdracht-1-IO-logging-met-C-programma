@@ -15,7 +15,7 @@ int Register(lineButton, con, name, pinstate)
 
 	while (flag == 0)
 	{
-		
+
 		//////////////////////////////////////////////////////// time registration
 		time_t rawtime;
 		struct tm *timeinfo;
@@ -23,9 +23,12 @@ int Register(lineButton, con, name, pinstate)
 		time(&rawtime);
 		timeinfo = localtime(&rawtime);
 
+		char *foo = asctime(timeinfo); // verwijderd de \n\r die je bij de asctime() is.
+		foo[strlen(foo) - 1] = 0;
+
 		char pin[] = "pin 5";
 		char state[] = "4";
-		char p1[255] = "INSERT INTO subjects( pin, state, time) VALUES ('";
+		char p1[85] = "INSERT INTO subjects( pin, state, time) VALUES ('";
 		char p2[] = "',";
 		char p3[] = ",'";
 		char p4[] = "')";
@@ -37,7 +40,7 @@ int Register(lineButton, con, name, pinstate)
 		strcat(p1, p2);	 // Concatenates p1 (p1+pin) met p2
 		strcat(p1, state);
 		strcat(p1, p3);
-		strcat(p1, asctime(timeinfo));
+		strcat(p1, foo);
 		strcat(p1, p4);
 
 		printf("%s\r\n", p1);
