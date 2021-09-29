@@ -6,61 +6,51 @@
 #include <gpiod.h>
 #include <unistd.h>
 
-int Register(lineButton, con);
+int Register(lineButton, con, name, pinstate);
 int shtable(con);
 
-int Register(lineButton, con)
+int Register(lineButton, con, name, pinstate)
 {
-	int val, val1;
 	int flag = 0;
 
 	while (flag == 0)
 	{
-
-		// Read button status and exit if pressed
-		val = gpiod_line_get_value(lineButton);
-
-		/*gpiod_line_release(lineButton);
-		gpiod_chip_close(chip);*/
-
+		
 		//////////////////////////////////////////////////////// time registration
-		if (val != val1)
+		time_t rawtime;
+		struct tm *timeinfo;
+
+		time(&rawtime);
+		timeinfo = localtime(&rawtime);
+
+		char pin[] = "pin 5";
+		char state[] = "4";
+		char p1[255] = "INSERT INTO subjects( pin, state, time) VALUES ('";
+		char p2[] = "',";
+		char p3[] = ",'";
+		char p4[] = "')";
+
+		sprintf(pin, "%s", name);		// convert int to char
+		sprintf(state, "%d", pinstate); // convert int to char
+
+		strcat(p1, pin); // Concatenates p1 met pin
+		strcat(p1, p2);	 // Concatenates p1 (p1+pin) met p2
+		strcat(p1, state);
+		strcat(p1, p3);
+		strcat(p1, asctime(timeinfo));
+		strcat(p1, p4);
+
+		printf("%s\r\n", p1);
+
+		if (mysql_query(con, p1))
 		{
-			time_t rawtime;
-			struct tm *timeinfo;
-
-			time(&rawtime);
-			timeinfo = localtime(&rawtime);
-
-			char pin[] = "pin 5";
-			char state[] = "4";
-			char p1[255] = "INSERT INTO subjects( pin, state, time) VALUES ('";
-			char p2[] = "',";
-			char p3[] = ",'";
-			char p4[] = "');";
-
-			sprintf(state, "%d", val); // convert int to char
-
-			strcat(p1, pin); // Concatenates p1 met pin
-			strcat(p1, p2);	 // Concatenates p1 (p1+pin) met p2
-			strcat(p1, state);
-			strcat(p1, p3);
-			strcat(p1, asctime(timeinfo));
-			strcat(p1, p4);
-
-			printf("%s\r\n", p1);
-
-			if (mysql_query(con, p1))
-			{
-				finish_with_error(con);
-			}
-			val1 = val;
-			flag = 1;
+			finish_with_error(con);
 		}
+		flag = 1;
 	}
 }
 
-int shtable(con) //////////////////////////////////////////////////////// Retrieve
+int shtable(con)
 {
 	if (mysql_query(con, "SELECT * FROM subjects"))
 	{
@@ -132,22 +122,55 @@ int main(int argc, char **argv)
 	//////////////////////////////////////////////////////// reading
 	const char *chipname = "gpiochip0";
 	struct gpiod_chip *chip;
-	struct gpiod_line *lineButton; // Pushbutton
+	struct gpiod_line *gpio19; // Pushbutton
+	struct gpiod_line *gpio21; // Pushbutton
+	struct gpiod_line *gpio26; // Pushbutton
 
 	// Open GPIO chip
 	chip = gpiod_chip_open_by_name(chipname);
 
-	lineButton = gpiod_chip_get_line(chip, 21);
+	gpio19 = gpiod_chip_get_line(chip, 19);
+	gpio21 = gpiod_chip_get_line(chip, 21);
+	gpio26 = gpiod_chip_get_line(chip, 26);
 
 	// Open switch line for input
-	gpiod_line_request_input(lineButton, "test");
+	gpiod_line_request_input(gpio19, "test");
+	gpiod_line_request_input(gpio21, "test");
+	gpiod_line_request_input(gpio26, "test");
+
+	int val = 0, val1 = 0, bal = 0, bal1 = 0, dal = 0, dal1 = 0;
 
 	while (true)
 	{
-		Register(lineButton, con);
+
+		val = gpiod_line_get_value(gpio21);
+		bal = gpiod_line_get_value(gpio19);
+		dal = gpiod_line_get_value(gpio26);
+
+		if (val != val1)
+		{
+			Register(gpio21, con, "GPIO21", val);
+		}
+		if (dal != dal1)
+		{
+			Register(gpio26, con, "GPIO26", dal);
+		}
+		if (bal != bal1)
+		{
+			Register(gpio19, con, "GPIO19", bal);
+		}
+
+		val1 = val;
+		dal1 = dal;
+		bal1 = bal;
 	}
 
 	shtable(con);
+
+	// Release lines and chip
+	gpiod_line_release(gpio19);
+	gpiod_line_release(gpio21);
+	gpiod_line_release(gpio26);
 
 	exit(0);
 }
