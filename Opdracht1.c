@@ -6,16 +6,15 @@
 #include <gpiod.h>
 #include <unistd.h>
 
-int Register(lineButton, con, name, pinstate);
+int Register(con, name, pinstate);
 int shtable(con);
 
-int Register(lineButton, con, name, pinstate)
+int Register(con, name, pinstate)
 {
 	int flag = 0;
 
 	while (flag == 0)
 	{
-
 		//////////////////////////////////////////////////////// time registration
 		time_t rawtime;
 		struct tm *timeinfo;
@@ -26,18 +25,16 @@ int Register(lineButton, con, name, pinstate)
 		char *foo = asctime(timeinfo); // verwijderd de \n\r die je bij de asctime() is.
 		foo[strlen(foo) - 1] = 0;
 
-		char pin[] = "pin 5";
 		char state[] = "4";
 		char p1[85] = "INSERT INTO subjects( pin, state, time) VALUES ('";
 		char p2[] = "',";
 		char p3[] = ",'";
 		char p4[] = "')";
 
-		sprintf(pin, "%s", name);		// convert int to char
 		sprintf(state, "%d", pinstate); // convert int to char
 
-		strcat(p1, pin); // Concatenates p1 met pin
-		strcat(p1, p2);	 // Concatenates p1 (p1+pin) met p2
+		strcat(p1, name); // Concatenates p1 met pin
+		strcat(p1, p2);	  // Concatenates p1 (p1+pin) met p2
 		strcat(p1, state);
 		strcat(p1, p3);
 		strcat(p1, foo);
@@ -49,6 +46,7 @@ int Register(lineButton, con, name, pinstate)
 		{
 			finish_with_error(con);
 		}
+
 		flag = 1;
 	}
 }
@@ -82,10 +80,8 @@ int shtable(con)
 				{
 					printf("%s ", field->name);
 				}
-
 				printf("\n");
 			}
-
 			printf("%s  ", row[i] ? row[i] : "NULL");
 		}
 	}
@@ -125,13 +121,14 @@ int main(int argc, char **argv)
 	//////////////////////////////////////////////////////// reading
 	const char *chipname = "gpiochip0";
 	struct gpiod_chip *chip;
-	struct gpiod_line *gpio19; // Pushbutton
-	struct gpiod_line *gpio21; // Pushbutton
-	struct gpiod_line *gpio26; // Pushbutton
+	struct gpiod_line *gpio19; // GPIO 19
+	struct gpiod_line *gpio21; // GPIO 21
+	struct gpiod_line *gpio26; // GPIO 26
 
 	// Open GPIO chip
 	chip = gpiod_chip_open_by_name(chipname);
 
+	// Open GPIO lines
 	gpio19 = gpiod_chip_get_line(chip, 19);
 	gpio21 = gpiod_chip_get_line(chip, 21);
 	gpio26 = gpiod_chip_get_line(chip, 26);
@@ -145,22 +142,22 @@ int main(int argc, char **argv)
 
 	while (true)
 	{
-
 		val = gpiod_line_get_value(gpio21);
 		bal = gpiod_line_get_value(gpio19);
 		dal = gpiod_line_get_value(gpio26);
 
 		if (val != val1)
 		{
-			Register(gpio21, con, "GPIO21", val);
+			Register(con, "GPIO 21", val);
 		}
 		if (dal != dal1)
 		{
-			Register(gpio26, con, "GPIO26", dal);
+			Register(con, "GPIO 26", dal);
 		}
 		if (bal != bal1)
 		{
-			Register(gpio19, con, "GPIO19", bal);
+			Register(con, "GPIO 19", bal);
+			break; // exits while loop
 		}
 
 		val1 = val;
