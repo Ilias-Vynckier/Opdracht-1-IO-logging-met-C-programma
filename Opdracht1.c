@@ -5,11 +5,13 @@
 #include <time.h>
 #include <gpiod.h>
 #include <unistd.h>
+#include <wiringPi.h>
 
 int Register(con, name, pinstate);
 int shtable(con);
+int wiringPiRegister(con);
 
-int Register(con, name, pinstate)
+int Register(con, name, pinstate) // libgpiod
 {
 	int flag = 0;
 
@@ -92,6 +94,14 @@ int shtable(con)
 	mysql_close(con);
 }
 
+int wiringPiRegister(con) // WiringPi
+{
+	int test = digitalRead(25);
+	printf("%d\r\n", test);
+
+	Register(con, "GPIO 26", test);
+}
+
 void finish_with_error(MYSQL *con)
 {
 	fprintf(stderr, "%s\n", mysql_error(con));
@@ -116,6 +126,14 @@ int main(int argc, char **argv)
 		fprintf(stderr, "%s\n", mysql_error(con));
 		mysql_close(con);
 		exit(1);
+	}
+
+	wiringPiSetup();
+	pinMode(25, INPUT);
+
+	while (true)
+	{
+		wiringPiRegister(con);
 	}
 
 	//////////////////////////////////////////////////////// reading
