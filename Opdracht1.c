@@ -8,7 +8,6 @@
 
 int Register(con, name, pinstate);
 int shtable(con);
-int PJ_RPI_Register(con);
 
 int Register(con, name, pinstate) // libgpiod
 {
@@ -52,6 +51,7 @@ int Register(con, name, pinstate) // libgpiod
 	}
 }
 
+	/////////////////////////////////////////////////////// Show table
 int shtable(con)
 {
 	if (mysql_query(con, "SELECT * FROM subjects"))
@@ -93,17 +93,6 @@ int shtable(con)
 	mysql_close(con);
 }
 
-int PJ_RPI_Register(con) // WiringPi
-{
-	int state = GPIO_READ(26);
-	printf("%d\r\n", state);
-
-	if(state>1)
-		state=1;
-
-	Register(con, "GPIO 26", state);
-}
-
 void finish_with_error(MYSQL *con)
 {
 	fprintf(stderr, "%s\n", mysql_error(con));
@@ -136,18 +125,34 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	//Definegpio17asoutput
+	//////////////////////////////////////////////////////// PJ_RPI
 	INP_GPIO(26);
+	INP_GPIO(19);
 
-	int flag = 1, flag1 = 0;
+	int flag_26 = 0, flag1_26 = 0,flag_19=0,flag1_19=0; // Comment out if using libgpiod
 	while (true)
 	{
-		flag = GPIO_READ(26);
-		if (flag != flag1)
+		int state_26=0,state_19=0;
+
+		flag_26 = GPIO_READ(26);
+		flag_19 = GPIO_READ(19);
+
+		if (flag_26 != flag1_26)
 		{
-			PJ_RPI_Register(con);
+			if (flag_26 > 1) // zorgt dat state niet 67108864 of 0 is maar 1 of 0
+				state_26 = 1;
+
+			Register(con, "GPIO 26", flag_26 || state_26);
 		}
-		flag1 = flag;
+		if (flag_19 != flag1_19)
+		{
+			if (flag_19 > 1) // zorgt dat state niet 67108864 of 0 is maar 1 of 0
+				state_19 = 1;
+
+			Register(con, "GPIO 19", flag_19 || state_19);
+		}
+		flag1_26 = flag_26;
+		flag1_19 = flag_19;
 	}
 
 	//////////////////////////////////////////////////////// reading
