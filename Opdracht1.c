@@ -5,11 +5,10 @@
 #include <time.h>
 #include <gpiod.h>
 #include <unistd.h>
-#include <wiringPi.h>
 
 int Register(con, name, pinstate);
 int shtable(con);
-int wiringPiRegister(con);
+int PJ_RPI_Register(con);
 
 int Register(con, name, pinstate) // libgpiod
 {
@@ -94,12 +93,15 @@ int shtable(con)
 	mysql_close(con);
 }
 
-int wiringPiRegister(con) // WiringPi
+int PJ_RPI_Register(con) // WiringPi
 {
-	int test = digitalRead(25);
-	printf("%d\r\n", test);
+	int state = GPIO_READ(26);
+	printf("%d\r\n", state);
 
-	Register(con, "GPIO 26", test);
+	if(state>1)
+		state=1;
+
+	Register(con, "GPIO 26", state);
 }
 
 void finish_with_error(MYSQL *con)
@@ -128,12 +130,24 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	wiringPiSetup();
-	pinMode(25, INPUT);
+	if (map_peripheral(&gpio) == -1)
+	{
+		printf("FailedtomapthephysicalGPIOregistersintothevirtualmemoryspace.\n");
+		return -1;
+	}
 
+	//Definegpio17asoutput
+	INP_GPIO(26);
+
+	int flag = 1, flag1 = 0;
 	while (true)
 	{
-		wiringPiRegister(con);
+		flag = GPIO_READ(26);
+		if (flag != flag1)
+		{
+			PJ_RPI_Register(con);
+		}
+		flag1 = flag;
 	}
 
 	//////////////////////////////////////////////////////// reading
